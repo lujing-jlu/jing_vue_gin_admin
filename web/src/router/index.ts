@@ -1,7 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 
 const router = createRouter({
-  history: createWebHistory(),
+  history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
     {
       path: '/',
@@ -17,6 +17,11 @@ const router = createRouter({
           path: 'users',
           name: 'users',
           component: () => import('../views/user/UserList.vue')
+        },
+        {
+          path: 'settings',
+          name: 'settings',
+          component: () => import('../views/settings/SystemSettings.vue')
         }
       ]
     },
@@ -31,18 +36,12 @@ const router = createRouter({
 // 路由守卫
 router.beforeEach((to, from, next) => {
   const token = localStorage.getItem('token')
-  if (to.path === '/login') {
-    if (token) {
-      next('/')
-    } else {
-      next()
-    }
+  if (to.path !== '/login' && !token) {
+    next('/login')
+  } else if (to.path === '/login' && token) {
+    next('/')
   } else {
-    if (token) {
-      next()
-    } else {
-      next('/login')
-    }
+    next()
   }
 })
 
