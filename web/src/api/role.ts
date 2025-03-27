@@ -22,6 +22,15 @@ export interface UpdateRoleRequest {
   permissions: string[]
 }
 
+export interface PermissionInfo {
+  value: string
+  label: string
+}
+
+export interface PermissionGroup {
+  [key: string]: PermissionInfo[]
+}
+
 // 获取角色列表
 export const getRoleList = () => {
   return request<Role[]>({
@@ -66,7 +75,7 @@ export const toggleRoleStatus = (id: number) => {
 
 // 获取所有权限
 export const getAllPermissions = () => {
-  return request<string[]>({
+  return request<PermissionGroup>({
     url: '/permissions',
     method: 'get'
   })

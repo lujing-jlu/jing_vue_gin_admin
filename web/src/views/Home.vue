@@ -135,7 +135,7 @@
               <el-option label="本月" value="month" />
               <el-option label="本季度" value="quarter" />
             </el-select>
-            <el-button type="primary" size="small">
+            <el-button type="primary" size="small" class="bg-blue-600 text-white hover:bg-blue-700">
               <el-icon class="mr-1"><Refresh /></el-icon>刷新
             </el-button>
           </div>

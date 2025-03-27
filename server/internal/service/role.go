@@ -71,15 +71,54 @@ func (s *RoleService) ToggleRoleStatus(id uint) error {
 }
 
 // GetAllPermissions 获取所有预定义权限
-func (s *RoleService) GetAllPermissions() []string {
-	return []string{
-		model.PermissionUserView,
-		model.PermissionUserCreate,
-		model.PermissionUserEdit,
-		model.PermissionUserDelete,
-		model.PermissionRoleView,
-		model.PermissionRoleCreate,
-		model.PermissionRoleEdit,
-		model.PermissionRoleDelete,
+func (s *RoleService) GetAllPermissions() map[string][]PermissionInfo {
+	return map[string][]PermissionInfo{
+		"系统管理": {
+			{Value: model.PermissionUserView, Label: "查看用户"},
+			{Value: model.PermissionUserCreate, Label: "创建用户"},
+			{Value: model.PermissionUserEdit, Label: "编辑用户"},
+			{Value: model.PermissionUserDelete, Label: "删除用户"},
+			{Value: model.PermissionRoleView, Label: "查看角色"},
+			{Value: model.PermissionRoleCreate, Label: "创建角色"},
+			{Value: model.PermissionRoleEdit, Label: "编辑角色"},
+			{Value: model.PermissionRoleDelete, Label: "删除角色"},
+			{Value: model.PermissionSystemConfig, Label: "系统配置"},
+			{Value: model.PermissionSystemLog, Label: "系统日志"},
+		},
+		"内容管理": {
+			{Value: model.PermissionArticleView, Label: "查看文章"},
+			{Value: model.PermissionArticleCreate, Label: "创建文章"},
+			{Value: model.PermissionArticleEdit, Label: "编辑文章"},
+			{Value: model.PermissionArticleDelete, Label: "删除文章"},
+			{Value: model.PermissionArticlePublish, Label: "发布文章"},
+			{Value: model.PermissionCategoryView, Label: "查看分类"},
+			{Value: model.PermissionCategoryCreate, Label: "创建分类"},
+			{Value: model.PermissionCategoryEdit, Label: "编辑分类"},
+			{Value: model.PermissionCategoryDelete, Label: "删除分类"},
+			{Value: model.PermissionTagView, Label: "查看标签"},
+			{Value: model.PermissionTagCreate, Label: "创建标签"},
+			{Value: model.PermissionTagEdit, Label: "编辑标签"},
+			{Value: model.PermissionTagDelete, Label: "删除标签"},
+			{Value: model.PermissionCommentView, Label: "查看评论"},
+			{Value: model.PermissionCommentReply, Label: "回复评论"},
+			{Value: model.PermissionCommentDelete, Label: "删除评论"},
+			{Value: model.PermissionCommentApprove, Label: "审核评论"},
+		},
+		"媒体管理": {
+			{Value: model.PermissionMediaView, Label: "查看媒体"},
+			{Value: model.PermissionMediaUpload, Label: "上传媒体"},
+			{Value: model.PermissionMediaEdit, Label: "编辑媒体"},
+			{Value: model.PermissionMediaDelete, Label: "删除媒体"},
+		},
+		"数据统计": {
+			{Value: model.PermissionStatView, Label: "查看统计"},
+			{Value: model.PermissionStatExport, Label: "导出统计"},
+			{Value: model.PermissionStatManage, Label: "管理统计"},
+		},
 	}
+}
+
+type PermissionInfo struct {
+	Value string `json:"value"`
+	Label string `json:"label"`
 } 

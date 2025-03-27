@@ -20,8 +20,8 @@ type UpdateRoleRequest struct {
 	Permissions []string `json:"permissions" binding:"required"`
 }
 
-// 预定义权限列表
-var (
+// 系统管理权限
+const (
 	PermissionUserView   = "user:view"   // 查看用户
 	PermissionUserCreate = "user:create" // 创建用户
 	PermissionUserEdit   = "user:edit"   // 编辑用户
@@ -31,4 +31,46 @@ var (
 	PermissionRoleCreate = "role:create" // 创建角色
 	PermissionRoleEdit   = "role:edit"   // 编辑角色
 	PermissionRoleDelete = "role:delete" // 删除角色
+
+	PermissionSystemConfig = "system:config" // 系统配置
+	PermissionSystemLog   = "system:log"    // 系统日志
+)
+
+// 内容管理权限
+const (
+	PermissionArticleView   = "article:view"   // 查看文章
+	PermissionArticleCreate = "article:create" // 创建文章
+	PermissionArticleEdit   = "article:edit"   // 编辑文章
+	PermissionArticleDelete = "article:delete" // 删除文章
+	PermissionArticlePublish = "article:publish" // 发布文章
+
+	PermissionCategoryView   = "category:view"   // 查看分类
+	PermissionCategoryCreate = "category:create" // 创建分类
+	PermissionCategoryEdit   = "category:edit"   // 编辑分类
+	PermissionCategoryDelete = "category:delete" // 删除分类
+
+	PermissionTagView   = "tag:view"   // 查看标签
+	PermissionTagCreate = "tag:create" // 创建标签
+	PermissionTagEdit   = "tag:edit"   // 编辑标签
+	PermissionTagDelete = "tag:delete" // 删除标签
+
+	PermissionCommentView    = "comment:view"    // 查看评论
+	PermissionCommentReply   = "comment:reply"   // 回复评论
+	PermissionCommentDelete  = "comment:delete"  // 删除评论
+	PermissionCommentApprove = "comment:approve" // 审核评论
+)
+
+// 媒体管理权限
+const (
+	PermissionMediaView   = "media:view"   // 查看媒体
+	PermissionMediaUpload = "media:upload" // 上传媒体
+	PermissionMediaEdit   = "media:edit"   // 编辑媒体
+	PermissionMediaDelete = "media:delete" // 删除媒体
+)
+
+// 数据统计权限
+const (
+	PermissionStatView    = "stat:view"    // 查看统计
+	PermissionStatExport  = "stat:export"  // 导出统计
+	PermissionStatManage  = "stat:manage"  // 管理统计
 ) 

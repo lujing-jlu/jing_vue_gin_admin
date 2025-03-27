@@ -16,7 +16,7 @@ func InitDB() error {
 	}
 
 	// 自动迁移数据库表
-	err = DB.AutoMigrate(&model.User{})
+	err = DB.AutoMigrate(&model.User{}, &model.Role{})
 	if err != nil {
 		return err
 	}

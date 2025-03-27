@@ -16,29 +16,11 @@ func main() {
 		log.Fatal("Failed to initialize database:", err)
 	}
 
-	// 创建测试用户
+	// 创建测试用户和角色
 	var count int64
 	config.DB.Model(&model.User{}).Count(&count)
 	if count == 0 {
-		// 使用bcrypt正确哈希密码
-		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("123456"), bcrypt.DefaultCost)
-		if err != nil {
-			log.Fatal("Failed to hash password:", err)
-		}
-
-		user := &model.User{
-			Username: "admin",
-			Password: string(hashedPassword),
-			Nickname: "管理员",
-			Role:     "admin",
-			Status:   1,
-		}
-		if err := config.DB.Create(user).Error; err != nil {
-			log.Fatal("Failed to create test user:", err)
-		}
-		log.Println("Created test user: admin/123456")
-
-		// 创建管理员角色
+		// 先创建管理员角色
 		adminRole := &model.Role{
 			Name:        "admin",
 			Description: "系统管理员",
@@ -52,12 +34,32 @@ func main() {
 				model.PermissionRoleCreate,
 				model.PermissionRoleEdit,
 				model.PermissionRoleDelete,
+				model.PermissionSystemConfig,
+				model.PermissionSystemLog,
 			},
 		}
 		if err := config.DB.Create(adminRole).Error; err != nil {
 			log.Fatal("Failed to create admin role:", err)
 		}
 		log.Println("Created admin role")
+
+		// 再创建管理员用户
+		hashedPassword, err := bcrypt.GenerateFromPassword([]byte("123456"), bcrypt.DefaultCost)
+		if err != nil {
+			log.Fatal("Failed to hash password:", err)
+		}
+
+		user := &model.User{
+			Username: "admin",
+			Password: string(hashedPassword),
+			Nickname: "管理员",
+			Role:     adminRole.Name,
+			Status:   1,
+		}
+		if err := config.DB.Create(user).Error; err != nil {
+			log.Fatal("Failed to create test user:", err)
+		}
+		log.Println("Created test user: admin/123456")
 	}
 
 	r := gin.Default()
