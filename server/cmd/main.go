@@ -37,6 +37,27 @@ func main() {
 			log.Fatal("Failed to create test user:", err)
 		}
 		log.Println("Created test user: admin/123456")
+
+		// 创建管理员角色
+		adminRole := &model.Role{
+			Name:        "admin",
+			Description: "系统管理员",
+			Status:      1,
+			Permissions: []string{
+				model.PermissionUserView,
+				model.PermissionUserCreate,
+				model.PermissionUserEdit,
+				model.PermissionUserDelete,
+				model.PermissionRoleView,
+				model.PermissionRoleCreate,
+				model.PermissionRoleEdit,
+				model.PermissionRoleDelete,
+			},
+		}
+		if err := config.DB.Create(adminRole).Error; err != nil {
+			log.Fatal("Failed to create admin role:", err)
+		}
+		log.Println("Created admin role")
 	}
 
 	r := gin.Default()
@@ -68,18 +89,18 @@ func main() {
 	authorized.Use(middleware.AuthMiddleware())
 	{
 		// 用户管理API
-		authorized.GET("/users", userHandler.GetUserList)          // 获取用户列表
-		authorized.POST("/users", userHandler.CreateUser)          // 创建用户
-		authorized.PUT("/users/:id", userHandler.UpdateUser)       // 更新用户
-		authorized.PUT("/users/:id/status", userHandler.ToggleUserStatus) // 切换用户状态
+		authorized.GET("/users", middleware.RequirePermission(model.PermissionUserView), userHandler.GetUserList)
+		authorized.POST("/users", middleware.RequirePermission(model.PermissionUserCreate), userHandler.CreateUser)
+		authorized.PUT("/users/:id", middleware.RequirePermission(model.PermissionUserEdit), userHandler.UpdateUser)
+		authorized.PUT("/users/:id/status", middleware.RequirePermission(model.PermissionUserEdit), userHandler.ToggleUserStatus)
 
 		// 角色管理API
-		authorized.GET("/roles", roleHandler.GetRoleList)           // 获取角色列表
-		authorized.POST("/roles", roleHandler.CreateRole)           // 创建角色
-		authorized.PUT("/roles/:id", roleHandler.UpdateRole)        // 更新角色
-		authorized.DELETE("/roles/:id", roleHandler.DeleteRole)     // 删除角色
-		authorized.PUT("/roles/:id/status", roleHandler.ToggleRoleStatus) // 切换角色状态
-		authorized.GET("/permissions", roleHandler.GetAllPermissions)      // 获取所有权限
+		authorized.GET("/roles", middleware.RequirePermission(model.PermissionRoleView), roleHandler.GetRoleList)
+		authorized.POST("/roles", middleware.RequirePermission(model.PermissionRoleCreate), roleHandler.CreateRole)
+		authorized.PUT("/roles/:id", middleware.RequirePermission(model.PermissionRoleEdit), roleHandler.UpdateRole)
+		authorized.DELETE("/roles/:id", middleware.RequirePermission(model.PermissionRoleDelete), roleHandler.DeleteRole)
+		authorized.PUT("/roles/:id/status", middleware.RequirePermission(model.PermissionRoleEdit), roleHandler.ToggleRoleStatus)
+		authorized.GET("/permissions", middleware.RequirePermission(model.PermissionRoleView), roleHandler.GetAllPermissions)
 	}
 
 	if err := r.Run(":8080"); err != nil {
