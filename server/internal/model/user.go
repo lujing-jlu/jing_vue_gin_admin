@@ -23,4 +23,16 @@ type LoginResponse struct {
 	Token     string    `json:"token"`
 	ExpiresAt time.Time `json:"expires_at"`
 	User      User      `json:"user"`
+}
+
+type CreateUserRequest struct {
+	Username string `json:"username" binding:"required"`
+	Password string `json:"password" binding:"required"`
+	Nickname string `json:"nickname" binding:"required"`
+	Role     string `json:"role" binding:"required"`
+}
+
+type UpdateUserRequest struct {
+	Nickname string `json:"nickname" binding:"required"`
+	Role     string `json:"role" binding:"required"`
 } 
