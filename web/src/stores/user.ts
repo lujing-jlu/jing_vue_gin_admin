@@ -30,10 +30,19 @@ export const useUserStore = defineStore('user', () => {
     router.push('/login')
   }
 
+  const updateUserInfo = (info: any) => {
+    userInfo.value = {
+      ...userInfo.value,
+      ...info
+    }
+    localStorage.setItem('userInfo', JSON.stringify(userInfo.value))
+  }
+
   return {
     token,
     userInfo,
     loginAction,
-    logout
+    logout,
+    updateUserInfo
   }
 }) 

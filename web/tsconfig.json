@@ -27,7 +27,13 @@
       "@/*": [
         "src/*"
       ]
-    }
+    },
+    "types": [
+      "vite/client",
+      "element-plus/global"
+    ],
+    "noImplicitAny": false,
+    "allowSyntheticDefaultImports": true
   },
   "include": [
     "src/**/*.ts",

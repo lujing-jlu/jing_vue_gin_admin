@@ -73,7 +73,7 @@
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-lg font-medium text-gray-900">最近活动</h3>
-            <el-button type="primary" link>查看更多</el-button>
+            <el-button type="primary" link class="text-blue-600 hover:text-blue-700">查看更多</el-button>
           </div>
         </template>
         <div class="space-y-4">
@@ -101,7 +101,7 @@
         <template #header>
           <div class="flex items-center justify-between">
             <h3 class="text-lg font-medium text-gray-900">系统公告</h3>
-            <el-button type="primary" link>更多</el-button>
+            <el-button type="primary" link class="text-blue-600 hover:text-blue-700">更多</el-button>
           </div>
         </template>
         <div class="space-y-4">

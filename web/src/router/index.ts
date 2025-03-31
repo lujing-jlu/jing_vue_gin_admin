@@ -22,6 +22,21 @@ const router = createRouter({
           path: 'settings',
           name: 'settings',
           component: () => import('../views/settings/SystemSettings.vue')
+        },
+        {
+          path: 'roles',
+          name: 'roles',
+          component: () => import('../views/role/RoleList.vue')
+        },
+        {
+          path: 'profile',
+          name: 'profile',
+          component: () => import('../views/user/Profile.vue')
+        },
+        {
+          path: 'logs',
+          name: 'logs',
+          component: () => import('../views/log/LogList.vue')
         }
       ]
     },

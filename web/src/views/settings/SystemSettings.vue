@@ -9,7 +9,7 @@
         type="primary" 
         @click="saveSettings"
         :loading="saving"
-        class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0"
+        class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0 text-white"
       >
         <el-icon class="mr-2"><Check /></el-icon>
         保存设置
@@ -122,7 +122,7 @@
                 />
               </el-form-item>
               <div class="flex justify-end">
-                <el-button size="small" @click="testEmailConfig">测试邮件连接</el-button>
+                <el-button size="small" @click="testEmailConfig" class="text-gray-600">测试邮件连接</el-button>
               </div>
             </el-card>
           </el-form-item>
@@ -169,11 +169,11 @@
             <el-input-number v-model="dataForm.backupRetention" :min="1" :max="30" class="w-full" />
           </el-form-item>
           <div class="flex justify-between">
-            <el-button @click="createBackup" :loading="backingUp">
+            <el-button @click="createBackup" :loading="backingUp" class="text-gray-600">
               <el-icon class="mr-1"><Download /></el-icon>
               创建备份
             </el-button>
-            <el-button @click="restoreBackup">
+            <el-button @click="restoreBackup" class="text-gray-600">
               <el-icon class="mr-1"><Upload /></el-icon>
               恢复备份
             </el-button>

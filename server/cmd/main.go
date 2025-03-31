@@ -79,9 +79,11 @@ func main() {
 	// 创建处理器
 	userHandler := handler.NewUserHandler()
 	roleHandler := handler.NewRoleHandler()
+	logHandler := handler.NewLogHandler()
 
 	// 公开路由
 	public := r.Group("/api")
+	public.Use(middleware.LoginLogMiddleware())
 	{
 		public.POST("/login", userHandler.Login)
 	}
@@ -91,18 +93,29 @@ func main() {
 	authorized.Use(middleware.AuthMiddleware())
 	{
 		// 用户管理API
-		authorized.GET("/users", middleware.RequirePermission(model.PermissionUserView), userHandler.GetUserList)
-		authorized.POST("/users", middleware.RequirePermission(model.PermissionUserCreate), userHandler.CreateUser)
-		authorized.PUT("/users/:id", middleware.RequirePermission(model.PermissionUserEdit), userHandler.UpdateUser)
-		authorized.PUT("/users/:id/status", middleware.RequirePermission(model.PermissionUserEdit), userHandler.ToggleUserStatus)
+		authorized.GET("/users", middleware.RequirePermission(model.PermissionUserView), middleware.OperationLog(model.LogModuleUser, model.LogActionView), userHandler.GetUserList)
+		authorized.POST("/users", middleware.RequirePermission(model.PermissionUserCreate), middleware.OperationLog(model.LogModuleUser, model.LogActionCreate), userHandler.CreateUser)
+		authorized.PUT("/users/:id", middleware.RequirePermission(model.PermissionUserEdit), middleware.OperationLog(model.LogModuleUser, model.LogActionUpdate), userHandler.UpdateUser)
+		authorized.PUT("/users/:id/status", middleware.RequirePermission(model.PermissionUserEdit), middleware.OperationLog(model.LogModuleUser, model.LogActionUpdate), userHandler.ToggleUserStatus)
+
+		// 个人信息API（无需特殊权限）
+		authorized.PUT("/user/profile", middleware.OperationLog(model.LogModuleUser, model.LogActionUpdate), userHandler.UpdateProfile)
+		authorized.PUT("/user/password", middleware.OperationLog(model.LogModuleUser, model.LogActionUpdate), userHandler.ChangePassword)
 
 		// 角色管理API
-		authorized.GET("/roles", middleware.RequirePermission(model.PermissionRoleView), roleHandler.GetRoleList)
-		authorized.POST("/roles", middleware.RequirePermission(model.PermissionRoleCreate), roleHandler.CreateRole)
-		authorized.PUT("/roles/:id", middleware.RequirePermission(model.PermissionRoleEdit), roleHandler.UpdateRole)
-		authorized.DELETE("/roles/:id", middleware.RequirePermission(model.PermissionRoleDelete), roleHandler.DeleteRole)
-		authorized.PUT("/roles/:id/status", middleware.RequirePermission(model.PermissionRoleEdit), roleHandler.ToggleRoleStatus)
+		authorized.GET("/roles", middleware.RequirePermission(model.PermissionRoleView), middleware.OperationLog(model.LogModuleRole, model.LogActionView), roleHandler.GetRoleList)
+		authorized.POST("/roles", middleware.RequirePermission(model.PermissionRoleCreate), middleware.OperationLog(model.LogModuleRole, model.LogActionCreate), roleHandler.CreateRole)
+		authorized.PUT("/roles/:id", middleware.RequirePermission(model.PermissionRoleEdit), middleware.OperationLog(model.LogModuleRole, model.LogActionUpdate), roleHandler.UpdateRole)
+		authorized.DELETE("/roles/:id", middleware.RequirePermission(model.PermissionRoleDelete), middleware.OperationLog(model.LogModuleRole, model.LogActionDelete), roleHandler.DeleteRole)
+		authorized.PUT("/roles/:id/status", middleware.RequirePermission(model.PermissionRoleEdit), middleware.OperationLog(model.LogModuleRole, model.LogActionUpdate), roleHandler.ToggleRoleStatus)
 		authorized.GET("/permissions", middleware.RequirePermission(model.PermissionRoleView), roleHandler.GetAllPermissions)
+
+		// 系统日志API
+		authorized.GET("/logs", middleware.RequirePermission(model.PermissionSystemLog), middleware.OperationLog(model.LogModuleSystem, model.LogActionView), logHandler.GetLogList)
+		authorized.DELETE("/logs", middleware.RequirePermission(model.PermissionSystemLog), middleware.OperationLog(model.LogModuleSystem, model.LogActionDelete), logHandler.DeleteLogs)
+		authorized.DELETE("/logs/clear", middleware.RequirePermission(model.PermissionSystemLog), middleware.OperationLog(model.LogModuleSystem, model.LogActionDelete), logHandler.ClearLogs)
+		authorized.GET("/logs/modules", middleware.RequirePermission(model.PermissionSystemLog), logHandler.GetLogModules)
+		authorized.GET("/logs/actions", middleware.RequirePermission(model.PermissionSystemLog), logHandler.GetLogActions)
 	}
 
 	if err := r.Run(":8080"); err != nil {

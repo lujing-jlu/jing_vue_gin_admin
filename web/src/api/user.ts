@@ -81,4 +81,31 @@ export const toggleUserStatus = (id: number) => {
     url: `/users/${id}/status`,
     method: 'put'
   })
+}
+
+/**
+ * 更新个人信息
+ */
+export const updateProfile = (data: { nickname: string, avatar?: string }) => {
+  return request<any>({
+    url: '/user/profile',
+    method: 'put',
+    data
+  })
+}
+
+/**
+ * 修改密码
+ */
+export interface ChangePasswordRequest {
+  oldPassword: string
+  newPassword: string
+}
+
+export const changePassword = (data: ChangePasswordRequest) => {
+  return request<any>({
+    url: '/user/password',
+    method: 'put',
+    data
+  })
 } 

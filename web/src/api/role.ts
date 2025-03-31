@@ -28,7 +28,7 @@ export interface PermissionInfo {
 }
 
 export interface PermissionGroup {
-  [key: string]: PermissionInfo[]
+  [key: string]: string[]
 }
 
 // 获取角色列表
@@ -41,7 +41,7 @@ export const getRoleList = () => {
 
 // 创建角色
 export const createRole = (data: CreateRoleRequest) => {
-  return request({
+  return request<any>({
     url: '/roles',
     method: 'post',
     data
@@ -50,7 +50,7 @@ export const createRole = (data: CreateRoleRequest) => {
 
 // 更新角色
 export const updateRole = (id: number, data: UpdateRoleRequest) => {
-  return request({
+  return request<any>({
     url: `/roles/${id}`,
     method: 'put',
     data
@@ -59,7 +59,7 @@ export const updateRole = (id: number, data: UpdateRoleRequest) => {
 
 // 删除角色
 export const deleteRole = (id: number) => {
-  return request({
+  return request<any>({
     url: `/roles/${id}`,
     method: 'delete'
   })
@@ -67,7 +67,7 @@ export const deleteRole = (id: number) => {
 
 // 切换角色状态
 export const toggleRoleStatus = (id: number) => {
-  return request({
+  return request<any>({
     url: `/roles/${id}/status`,
     method: 'put'
   })

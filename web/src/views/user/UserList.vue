@@ -9,6 +9,7 @@
         type="primary" 
         @click="handleAdd"
         class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0 text-white"
+        style="color: white !important; background-color: #3b82f6 !important;"
       >
         <el-icon class="mr-2"><Plus /></el-icon>
         添加用户
@@ -84,6 +85,7 @@
                 size="small" 
                 @click="handleEdit(row)"
                 class="!rounded-l-lg bg-blue-600 text-white hover:bg-blue-700"
+                style="color: white !important; background-color: #3b82f6 !important;"
               >
                 <el-icon class="mr-1"><Edit /></el-icon>编辑
               </el-button>
@@ -93,6 +95,8 @@
                 @click="handleToggleStatus(row)"
                 class="!rounded-r-lg text-white"
                 :class="row.status === 1 ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'"
+                style="color: white !important;"
+                :style="row.status === 1 ? 'background-color: #ef4444 !important;' : 'background-color: #10b981 !important;'"
               >
                 <el-icon class="mr-1">
                   <component :is="row.status === 1 ? 'Lock' : 'Unlock'" />

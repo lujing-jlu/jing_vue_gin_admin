@@ -8,7 +8,7 @@
       <el-button 
         type="primary" 
         @click="handleAdd"
-        class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0"
+        class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0 text-white"
       >
         <el-icon class="mr-2"><Plus /></el-icon>
         添加角色
@@ -58,7 +58,7 @@
                 type="primary" 
                 size="small" 
                 @click="handleEdit(row)"
-                class="!rounded-l-lg"
+                class="!rounded-l-lg bg-blue-600 text-white hover:bg-blue-700"
               >
                 <el-icon class="mr-1"><Edit /></el-icon>编辑
               </el-button>
@@ -66,7 +66,8 @@
                 :type="row.status === 1 ? 'danger' : 'success'" 
                 size="small" 
                 @click="handleToggleStatus(row)"
-                class="!rounded-r-lg"
+                class="!rounded-r-lg text-white"
+                :class="row.status === 1 ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'"
               >
                 <el-icon class="mr-1">
                   <component :is="row.status === 1 ? 'Lock' : 'Unlock'" />
@@ -138,12 +139,12 @@
       </el-form>
       <template #footer>
         <div class="flex justify-end space-x-3">
-          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button @click="dialogVisible = false" class="text-gray-600">取消</el-button>
           <el-button 
             type="primary" 
             @click="handleSubmit" 
             :loading="submitting"
-            class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0"
+            class="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 border-0 text-white hover:shadow-lg"
           >
             确定
           </el-button>

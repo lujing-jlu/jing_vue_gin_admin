@@ -105,4 +105,62 @@ func (h *UserHandler) ToggleUserStatus(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "用户状态已更新"})
+}
+
+// UpdateProfile 更新用户个人信息
+func (h *UserHandler) UpdateProfile(c *gin.Context) {
+	// 从上下文中获取当前用户ID
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未登录"})
+		return
+	}
+
+	// 解析请求体
+	var profileData struct {
+		Nickname string `json:"nickname" binding:"required"`
+		Avatar   string `json:"avatar"`
+	}
+
+	if err := c.ShouldBindJSON(&profileData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "请求参数错误"})
+		return
+	}
+
+	// 更新用户个人信息
+	if err := h.userService.UpdateProfile(userID.(uint), profileData.Nickname, profileData.Avatar); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "更新个人信息失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "个人信息更新成功"})
+}
+
+// ChangePassword 修改密码
+func (h *UserHandler) ChangePassword(c *gin.Context) {
+	// 从上下文中获取当前用户ID
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未登录"})
+		return
+	}
+
+	// 解析请求体
+	var passwordData struct {
+		OldPassword string `json:"oldPassword" binding:"required"`
+		NewPassword string `json:"newPassword" binding:"required,min=6"`
+	}
+
+	if err := c.ShouldBindJSON(&passwordData); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "请求参数错误"})
+		return
+	}
+
+	// 验证旧密码并更新新密码
+	if err := h.userService.ChangePassword(userID.(uint), passwordData.OldPassword, passwordData.NewPassword); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "密码修改成功"})
 } 

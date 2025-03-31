@@ -15,20 +15,28 @@
           <div class="px-4 py-3 text-xs uppercase text-gray-500 font-semibold">
             主要功能
           </div>
-          <el-menu-item index="/" class="hover:bg-gray-800 transition-colors">
+          <el-menu-item index="/" class="hover:bg-gray-800 transition-colors" style="color: #ffffff !important">
             <el-icon><HomeFilled /></el-icon>
-            <span>仪表盘</span>
+            <span>首页</span>
           </el-menu-item>
-          <el-menu-item index="/users" class="hover:bg-gray-800 transition-colors">
+          <el-menu-item index="/users" class="hover:bg-gray-800 transition-colors" style="color: #ffffff !important">
             <el-icon><User /></el-icon>
             <span>用户管理</span>
+          </el-menu-item>
+          <el-menu-item index="/roles" class="hover:bg-gray-800 transition-colors" style="color: #ffffff !important">
+            <el-icon><Setting /></el-icon>
+            <span>角色管理</span>
           </el-menu-item>
           
           <div class="px-4 py-3 text-xs uppercase text-gray-500 font-semibold mt-4">
             系统管理
           </div>
-          <el-menu-item index="/settings" class="hover:bg-gray-800 transition-colors">
-            <el-icon><Setting /></el-icon>
+          <el-menu-item index="/logs" class="hover:bg-gray-800 transition-colors" style="color: #ffffff !important">
+            <el-icon><Document /></el-icon>
+            <span>系统日志</span>
+          </el-menu-item>
+          <el-menu-item index="/settings" class="hover:bg-gray-800 transition-colors" style="color: #ffffff !important">
+            <el-icon><Tools /></el-icon>
             <span>系统设置</span>
           </el-menu-item>
         </el-menu>
@@ -47,23 +55,23 @@
             <el-icon class="text-xl text-gray-600"><Bell /></el-icon>
           </el-badge>
           <el-dropdown @command="handleCommand" trigger="click">
-            <span class="flex items-center cursor-pointer hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors">
+            <span class="flex items-center cursor-pointer hover:bg-gray-50 px-3 py-2 rounded-lg transition-colors text-gray-700" style="color: #374151 !important">
               <el-avatar :size="32" class="mr-2 bg-gradient-to-r from-blue-500 to-indigo-500">
                 {{ userStore.userInfo.nickname?.[0] || 'A' }}
               </el-avatar>
-              <span class="text-gray-700">{{ userStore.userInfo.nickname || 'Admin' }}</span>
+              <span class="text-gray-700" style="color: #374151 !important">{{ userStore.userInfo.nickname || 'Admin' }}</span>
               <el-icon class="ml-2 text-gray-500"><ArrowDown /></el-icon>
             </span>
             <template #dropdown>
               <el-dropdown-menu class="rounded-lg shadow-lg border-0">
-                <el-dropdown-item command="profile" class="hover:bg-gray-50">
+                <el-dropdown-item command="profile" class="hover:bg-gray-50 text-gray-700" style="color: #374151 !important">
                   <el-icon class="mr-2"><User /></el-icon>个人信息
                 </el-dropdown-item>
-                <el-dropdown-item command="settings" class="hover:bg-gray-50">
+                <el-dropdown-item command="settings" class="hover:bg-gray-50 text-gray-700" style="color: #374151 !important">
                   <el-icon class="mr-2"><Setting /></el-icon>账号设置
                 </el-dropdown-item>
                 <el-divider class="!my-1" />
-                <el-dropdown-item command="logout" class="hover:bg-gray-50">
+                <el-dropdown-item command="logout" class="hover:bg-gray-50 text-gray-700" style="color: #374151 !important">
                   <el-icon class="mr-2"><SwitchButton /></el-icon>退出登录
                 </el-dropdown-item>
               </el-dropdown-menu>
@@ -79,32 +87,34 @@
 </template>
 
 <script setup lang="ts">
-import { HomeFilled, ArrowDown, Fold, User, SwitchButton, Setting, Bell } from '@element-plus/icons-vue'
+import { HomeFilled, ArrowDown, Fold, User, SwitchButton, Setting, Bell, Tools, Document } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { useRouter } from 'vue-router'
 
 const userStore = useUserStore()
+const router = useRouter()
 
 const handleCommand = (command: string) => {
-  switch (command) {
-    case 'profile':
-      ElMessage.info('个人信息功能开发中')
-      break
-    case 'settings':
-      ElMessage.info('账号设置功能开发中')
-      break
-    case 'logout':
-      ElMessageBox.confirm('确定要退出登录吗?', '提示', {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning',
-        customClass: 'rounded-lg'
-      }).then(() => {
-        userStore.logout()
-        ElMessage.success('退出成功')
-      }).catch(() => {})
-      break
+  if (command === 'logout') {
+    handleLogout()
+  } else if (command === 'profile') {
+    router.push('/profile')
+  } else if (command === 'settings') {
+    router.push('/settings')
   }
+}
+
+const handleLogout = () => {
+  ElMessageBox.confirm('确定要退出登录吗?', '提示', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning',
+    customClass: 'rounded-lg'
+  }).then(() => {
+    userStore.logout()
+    ElMessage.success('退出成功')
+  }).catch(() => {})
 }
 </script>
 

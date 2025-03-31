@@ -104,4 +104,48 @@ func (s *UserService) ToggleUserStatus(id uint) error {
 	}
 
 	return config.DB.Save(&user).Error
+}
+
+// UpdateProfile 更新用户个人信息
+func (s *UserService) UpdateProfile(id uint, nickname string, avatar string) error {
+	// 查找用户
+	var user model.User
+	if err := config.DB.First(&user, id).Error; err != nil {
+		return err
+	}
+
+	// 更新用户信息
+	updates := map[string]interface{}{
+		"nickname": nickname,
+	}
+	
+	// 如果提供了头像URL，则更新头像
+	if avatar != "" {
+		updates["avatar"] = avatar
+	}
+
+	return config.DB.Model(&user).Updates(updates).Error
+}
+
+// ChangePassword 修改密码
+func (s *UserService) ChangePassword(id uint, oldPassword string, newPassword string) error {
+	// 查找用户
+	var user model.User
+	if err := config.DB.First(&user, id).Error; err != nil {
+		return err
+	}
+
+	// 验证旧密码
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(oldPassword)); err != nil {
+		return errors.New("原密码不正确")
+	}
+
+	// 生成新密码的哈希值
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	// 更新密码
+	return config.DB.Model(&user).Update("password", string(hashedPassword)).Error
 } 
