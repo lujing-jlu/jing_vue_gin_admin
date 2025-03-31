@@ -12,10 +12,10 @@
             <el-icon class="text-2xl text-white"><User /></el-icon>
           </div>
           <div class="ml-4">
-            <p class="text-sm text-gray-600">总用户数</p>
-            <p class="text-2xl font-bold text-gray-900 mt-1">1,234</p>
+            <p class="text-sm text-gray-600">用户总数</p>
+            <p class="text-2xl font-bold text-gray-900 mt-1">{{ stats.userCount || 0 }}</p>
             <p class="text-xs text-green-600 mt-1 flex items-center">
-              <el-icon class="mr-1"><ArrowUp /></el-icon> 12% 较上月
+              <router-link to="/users" class="hover:underline">查看详情</router-link>
             </p>
           </div>
         </div>
@@ -24,13 +24,13 @@
       <el-card class="border-0 shadow-sm hover:shadow-md transition-shadow rounded-xl">
         <div class="flex items-center">
           <div class="p-3 rounded-full bg-gradient-to-br from-green-500 to-green-600">
-            <el-icon class="text-2xl text-white"><Document /></el-icon>
+            <el-icon class="text-2xl text-white"><Setting /></el-icon>
           </div>
           <div class="ml-4">
-            <p class="text-sm text-gray-600">文章数量</p>
-            <p class="text-2xl font-bold text-gray-900 mt-1">567</p>
+            <p class="text-sm text-gray-600">角色数量</p>
+            <p class="text-2xl font-bold text-gray-900 mt-1">{{ stats.roleCount || 0 }}</p>
             <p class="text-xs text-green-600 mt-1 flex items-center">
-              <el-icon class="mr-1"><ArrowUp /></el-icon> 8% 较上月
+              <router-link to="/roles" class="hover:underline">查看详情</router-link>
             </p>
           </div>
         </div>
@@ -39,13 +39,13 @@
       <el-card class="border-0 shadow-sm hover:shadow-md transition-shadow rounded-xl">
         <div class="flex items-center">
           <div class="p-3 rounded-full bg-gradient-to-br from-purple-500 to-purple-600">
-            <el-icon class="text-2xl text-white"><View /></el-icon>
+            <el-icon class="text-2xl text-white"><Document /></el-icon>
           </div>
           <div class="ml-4">
-            <p class="text-sm text-gray-600">总浏览量</p>
-            <p class="text-2xl font-bold text-gray-900 mt-1">89,012</p>
+            <p class="text-sm text-gray-600">日志总数</p>
+            <p class="text-2xl font-bold text-gray-900 mt-1">{{ stats.logCount || 0 }}</p>
             <p class="text-xs text-green-600 mt-1 flex items-center">
-              <el-icon class="mr-1"><ArrowUp /></el-icon> 23% 较上月
+              <router-link to="/logs" class="hover:underline">查看详情</router-link>
             </p>
           </div>
         </div>
@@ -54,13 +54,13 @@
       <el-card class="border-0 shadow-sm hover:shadow-md transition-shadow rounded-xl">
         <div class="flex items-center">
           <div class="p-3 rounded-full bg-gradient-to-br from-orange-500 to-orange-600">
-            <el-icon class="text-2xl text-white"><Star /></el-icon>
+            <el-icon class="text-2xl text-white"><Bell /></el-icon>
           </div>
           <div class="ml-4">
-            <p class="text-sm text-gray-600">收藏数</p>
-            <p class="text-2xl font-bold text-gray-900 mt-1">3,456</p>
+            <p class="text-sm text-gray-600">今日登录</p>
+            <p class="text-2xl font-bold text-gray-900 mt-1">{{ stats.todayLoginCount || 0 }}</p>
             <p class="text-xs text-green-600 mt-1 flex items-center">
-              <el-icon class="mr-1"><ArrowUp /></el-icon> 15% 较上月
+              <el-icon class="mr-1"><ArrowUp /></el-icon> 近24小时
             </p>
           </div>
         </div>
@@ -68,91 +68,130 @@
     </div>
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- 左侧卡片 - 最近活动 -->
+      <!-- 左侧卡片 - 最近登录记录 -->
       <el-card class="border-0 shadow-sm rounded-xl col-span-2">
         <template #header>
           <div class="flex items-center justify-between">
-            <h3 class="text-lg font-medium text-gray-900">最近活动</h3>
-            <el-button type="primary" link class="text-blue-600 hover:text-blue-700">查看更多</el-button>
+            <h3 class="text-lg font-medium text-gray-900">最近登录记录</h3>
+            <router-link to="/logs">
+              <el-button type="primary" link class="text-blue-600 hover:text-blue-700">查看更多</el-button>
+            </router-link>
           </div>
         </template>
-        <div class="space-y-4">
-          <div v-for="i in 5" :key="i" class="flex items-start py-3 border-b border-gray-100 last:border-0">
+        <div class="space-y-4" v-loading="loading">
+          <div v-for="(log, index) in recentLogins" :key="log.id" class="flex items-start py-3 border-b border-gray-100 last:border-0">
             <el-avatar :size="40" class="bg-gradient-to-r from-blue-500 to-indigo-500">
-              {{ ['A', 'B', 'C', 'D', 'E'][i-1] }}
+              {{ log.username?.[0] || 'U' }}
             </el-avatar>
             <div class="ml-4 flex-1">
               <div class="flex justify-between items-start">
                 <p class="text-sm text-gray-900">
-                  <span class="font-medium">用户{{ i }}</span>
-                  发表了新文章
-                  <span class="text-blue-600 cursor-pointer hover:underline">《示例文章标题》</span>
+                  <span class="font-medium">{{ log.username }}</span>
+                  <span class="text-gray-500">登录系统</span>
                 </p>
-                <el-tag size="small" class="ml-2 rounded-full text-xs" type="info">2小时前</el-tag>
+                <div>
+                  <el-tag 
+                    size="small" 
+                    class="ml-2 rounded-full text-xs" 
+                    :type="log.status === 1 ? 'success' : 'danger'"
+                    effect="plain">
+                    {{ log.status === 1 ? '成功' : '失败' }}
+                  </el-tag>
+                  <el-tag size="small" class="ml-2 rounded-full text-xs" type="info">
+                    {{ formatTime(log.created_at) }}
+                  </el-tag>
+                </div>
               </div>
-              <p class="text-xs text-gray-500 mt-1 line-clamp-2">这是一篇示例文章的摘要内容，展示在动态列表中。用户可以通过点击标题查看详情...</p>
+              <p class="text-xs text-gray-500 mt-1 flex items-center">
+                <span class="mr-2">IP: {{ log.ip }}</span>
+                <span>{{ log.detail }}</span>
+              </p>
             </div>
+          </div>
+          <div v-if="recentLogins.length === 0 && !loading" class="py-8 text-center text-gray-500">
+            暂无登录记录
           </div>
         </div>
       </el-card>
 
-      <!-- 右侧卡片 - 系统公告 -->
+      <!-- 右侧卡片 - 系统信息 -->
       <el-card class="border-0 shadow-sm rounded-xl">
         <template #header>
           <div class="flex items-center justify-between">
-            <h3 class="text-lg font-medium text-gray-900">系统公告</h3>
-            <el-button type="primary" link class="text-blue-600 hover:text-blue-700">更多</el-button>
+            <h3 class="text-lg font-medium text-gray-900">系统信息</h3>
+            <el-button 
+              type="primary" 
+              link 
+              class="text-blue-600 hover:text-blue-700"
+              @click="refreshSystemInfo">
+              <el-icon class="mr-1"><Refresh /></el-icon>刷新
+            </el-button>
           </div>
         </template>
         <div class="space-y-4">
-          <div v-for="i in 3" :key="i" class="mb-4 last:mb-0">
-            <div class="flex items-center justify-between mb-2">
-              <h4 class="text-base text-gray-900 font-medium flex items-center">
-                <el-icon class="mr-2 text-blue-600"><Bell /></el-icon>
-                系统{{ i === 1 ? '更新' : i === 2 ? '维护' : '安全' }}通知
-              </h4>
-              <span class="text-xs text-gray-500">{{ i }}天前</span>
+          <div class="mb-4 last:mb-0">
+            <div class="flex py-2 border-b border-gray-100">
+              <div class="w-1/3 text-gray-500">系统名称</div>
+              <div class="w-2/3">Vue Gin Admin</div>
             </div>
-            <p class="text-sm text-gray-600 mb-3">
-              {{ i === 1 ? '系统已升级到最新版本，新增多项功能和安全修复。' : 
-                 i === 2 ? '系统将于今晚22:00进行例行维护，预计持续1小时。' : 
-                 '为保障账号安全，建议定期修改密码并启用双因素认证。' }}
-            </p>
-            <el-divider class="!my-1" />
+            <div class="flex py-2 border-b border-gray-100">
+              <div class="w-1/3 text-gray-500">系统版本</div>
+              <div class="w-2/3">v1.0.0</div>
+            </div>
+            <div class="flex py-2 border-b border-gray-100">
+              <div class="w-1/3 text-gray-500">前端框架</div>
+              <div class="w-2/3">Vue 3 + TypeScript</div>
+            </div>
+            <div class="flex py-2 border-b border-gray-100">
+              <div class="w-1/3 text-gray-500">后端框架</div>
+              <div class="w-2/3">Gin + GORM</div>
+            </div>
+            <div class="flex py-2 border-b border-gray-100">
+              <div class="w-1/3 text-gray-500">服务器时间</div>
+              <div class="w-2/3">{{ systemInfo.currentTime }}</div>
+            </div>
+            <div class="flex py-2">
+              <div class="w-1/3 text-gray-500">运行环境</div>
+              <div class="w-2/3">{{ systemInfo.environment }}</div>
+            </div>
           </div>
         </div>
       </el-card>
     </div>
 
-    <!-- 底部卡片 -->
+    <!-- 底部卡片 - 最近操作记录 -->
     <el-card class="border-0 shadow-sm rounded-xl">
       <template #header>
         <div class="flex items-center justify-between">
-          <h3 class="text-lg font-medium text-gray-900">系统使用情况</h3>
-          <div class="flex space-x-2">
-            <el-select v-model="timeRange" placeholder="Select" size="small" class="!w-32">
-              <el-option label="本周" value="week" />
-              <el-option label="本月" value="month" />
-              <el-option label="本季度" value="quarter" />
-            </el-select>
-            <el-button type="primary" size="small" class="bg-blue-600 text-white hover:bg-blue-700">
-              <el-icon class="mr-1"><Refresh /></el-icon>刷新
-            </el-button>
-          </div>
+          <h3 class="text-lg font-medium text-gray-900">最近操作记录</h3>
+          <router-link to="/logs">
+            <el-button type="primary" link class="text-blue-600 hover:text-blue-700">查看更多</el-button>
+          </router-link>
         </div>
       </template>
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div class="flex flex-col">
-          <h4 class="text-base font-medium text-gray-900 mb-4">活跃用户趋势</h4>
-          <div class="flex-1 h-64 bg-gradient-to-b from-blue-50 to-white rounded-lg flex items-center justify-center">
-            <p class="text-gray-400">图表区域</p>
-          </div>
-        </div>
-        <div class="flex flex-col">
-          <h4 class="text-base font-medium text-gray-900 mb-4">内容分布情况</h4>
-          <div class="flex-1 h-64 bg-gradient-to-b from-blue-50 to-white rounded-lg flex items-center justify-center">
-            <p class="text-gray-400">图表区域</p>
-          </div>
+      <div v-loading="loading">
+        <el-table :data="recentLogs" style="width: 100%" border="true">
+          <el-table-column prop="username" label="操作用户" width="120" />
+          <el-table-column prop="module" label="操作模块" width="120">
+            <template #default="{ row }">
+              <el-tag :type="getModuleType(row.module)" class="rounded-full px-2 py-0" size="small" effect="plain">
+                {{ getModuleLabel(row.module) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="action" label="操作类型" width="120">
+            <template #default="{ row }">
+              <el-tag :type="getActionType(row.action)" class="rounded-full px-2 py-0" size="small" effect="plain">
+                {{ getActionLabel(row.action) }}
+              </el-tag>
+            </template>
+          </el-table-column>
+          <el-table-column prop="resource" label="操作资源" min-width="150" />
+          <el-table-column prop="detail" label="操作详情" min-width="200" show-overflow-tooltip />
+          <el-table-column prop="created_at" label="操作时间" width="170" />
+        </el-table>
+        <div v-if="recentLogs.length === 0 && !loading" class="py-8 text-center text-gray-500">
+          暂无操作记录
         </div>
       </div>
     </el-card>
@@ -160,10 +199,154 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { User, Document, View, Star, Bell, ArrowUp, Refresh } from '@element-plus/icons-vue'
+import { ref, reactive, onMounted } from 'vue'
+import { User, Document, View, Star, Bell, ArrowUp, Refresh, Setting } from '@element-plus/icons-vue'
+import { getLogList, type SystemLog } from '@/api/log'
 
-const timeRange = ref('month')
+const loading = ref(false)
+const recentLogins = ref<SystemLog[]>([])
+const recentLogs = ref<SystemLog[]>([])
+
+const stats = reactive({
+  userCount: 5,  // 模拟数据
+  roleCount: 3,  // 模拟数据
+  logCount: 0,
+  todayLoginCount: 0
+})
+
+const systemInfo = reactive({
+  currentTime: new Date().toLocaleString(),
+  environment: 'Production'
+})
+
+// 获取最近登录记录
+const fetchRecentLogins = async () => {
+  try {
+    loading.value = true
+    const res = await getLogList({
+      module: 'auth',
+      action: 'login',
+      page: 1,
+      page_size: 5
+    })
+    recentLogins.value = res.list
+    stats.todayLoginCount = res.list.filter((log: SystemLog) => {
+      const today = new Date().toISOString().split('T')[0]
+      return log.created_at.startsWith(today) && log.status === 1
+    }).length
+  } catch (error) {
+    console.error('Failed to fetch recent logins:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 获取最近操作记录
+const fetchRecentLogs = async () => {
+  try {
+    loading.value = true
+    const res = await getLogList({
+      page: 1,
+      page_size: 5
+    })
+    recentLogs.value = res.list
+    stats.logCount = res.total
+  } catch (error) {
+    console.error('Failed to fetch recent logs:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+// 格式化时间显示
+const formatTime = (timeStr: string) => {
+  if (!timeStr) return ''
+  
+  const date = new Date(timeStr)
+  const now = new Date()
+  const diff = now.getTime() - date.getTime()
+  
+  // 1分钟内
+  if (diff < 60 * 1000) {
+    return '刚刚'
+  }
+  // 1小时内
+  if (diff < 60 * 60 * 1000) {
+    return `${Math.floor(diff / (60 * 1000))}分钟前`
+  }
+  // 24小时内
+  if (diff < 24 * 60 * 60 * 1000) {
+    return `${Math.floor(diff / (60 * 60 * 1000))}小时前`
+  }
+  // 超过24小时
+  return timeStr.substr(0, 16).replace('T', ' ')
+}
+
+// 获取模块标签
+const getModuleLabel = (module: string) => {
+  const moduleLabels: Record<string, string> = {
+    user: '用户模块',
+    role: '角色模块',
+    system: '系统模块',
+    auth: '认证模块'
+  }
+  return moduleLabels[module] || module
+}
+
+// 获取操作类型标签
+const getActionLabel = (action: string) => {
+  const actionLabels: Record<string, string> = {
+    login: '登录',
+    logout: '登出',
+    create: '创建',
+    update: '更新',
+    delete: '删除',
+    view: '查看',
+    export: '导出',
+    import: '导入',
+    enable: '启用',
+    disable: '禁用'
+  }
+  return actionLabels[action] || action
+}
+
+// 获取模块标签类型
+const getModuleType = (module: string) => {
+  const moduleTypes: Record<string, string> = {
+    user: 'primary',
+    role: 'success',
+    system: 'warning',
+    auth: 'info'
+  }
+  return moduleTypes[module] || 'info'
+}
+
+// 获取操作类型标签类型
+const getActionType = (action: string) => {
+  const actionTypes: Record<string, string> = {
+    login: 'info',
+    logout: 'info',
+    create: 'success',
+    update: 'primary',
+    delete: 'danger',
+    view: 'info',
+    export: 'warning',
+    import: 'warning',
+    enable: 'success',
+    disable: 'danger'
+  }
+  return actionTypes[action] || 'info'
+}
+
+// 刷新系统信息
+const refreshSystemInfo = () => {
+  systemInfo.currentTime = new Date().toLocaleString()
+}
+
+onMounted(() => {
+  fetchRecentLogins()
+  fetchRecentLogs()
+})
 </script>
 
 <style scoped>
@@ -194,6 +377,30 @@ const timeRange = ref('month')
   background-color: #f3f4f6;
   border-color: #f3f4f6;
   color: #6b7280;
+}
+
+:deep(.el-tag--success.is-plain) {
+  background-color: #dcfce7;
+  border-color: #dcfce7;
+  color: #16a34a;
+}
+
+:deep(.el-tag--danger.is-plain) {
+  background-color: #fee2e2;
+  border-color: #fee2e2;
+  color: #dc2626;
+}
+
+:deep(.el-tag--primary.is-plain) {
+  background-color: #e0f2fe;
+  border-color: #e0f2fe;
+  color: #0ea5e9;
+}
+
+:deep(.el-tag--warning.is-plain) {
+  background-color: #fef3c7;
+  border-color: #fef3c7;
+  color: #d97706;
 }
 
 .line-clamp-2 {
