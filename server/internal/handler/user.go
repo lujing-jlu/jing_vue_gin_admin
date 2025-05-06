@@ -163,4 +163,109 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "密码修改成功"})
+}
+
+// GetUsers 获取用户列表
+func (h *UserHandler) GetUsers(c *gin.Context) {
+	// 实现分页和搜索功能
+	page := c.DefaultQuery("page", "1")
+	pageSize := c.DefaultQuery("page_size", "10")
+	keyword := c.DefaultQuery("keyword", "")
+	role := c.DefaultQuery("role", "")
+	status := c.DefaultQuery("status", "")
+
+	pageInt, _ := strconv.Atoi(page)
+	pageSizeInt, _ := strconv.Atoi(pageSize)
+	statusInt, _ := strconv.Atoi(status)
+
+	var statusFilter *int
+	if status != "" {
+		statusFilter = &statusInt
+	}
+
+	result, err := h.userService.GetUsers(pageInt, pageSizeInt, keyword, role, statusFilter)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户列表失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, result)
+}
+
+// GetUser 获取用户详情
+func (h *UserHandler) GetUser(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "用户ID格式错误"})
+		return
+	}
+
+	user, err := h.userService.GetUserByID(uint(id))
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "用户不存在"})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
+}
+
+// DeleteUser 删除用户
+func (h *UserHandler) DeleteUser(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "用户ID格式错误"})
+		return
+	}
+
+	if err := h.userService.DeleteUser(uint(id)); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "用户删除成功"})
+}
+
+// UpdateUserStatus 更新用户状态
+func (h *UserHandler) UpdateUserStatus(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "用户ID格式错误"})
+		return
+	}
+
+	var req struct {
+		Status int `json:"status" binding:"required,oneof=0 1"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "请求参数错误"})
+		return
+	}
+
+	if err := h.userService.UpdateUserStatus(uint(id), req.Status); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "用户状态更新成功"})
+}
+
+// GetCurrentUser 获取当前登录用户信息
+func (h *UserHandler) GetCurrentUser(c *gin.Context) {
+	// 从上下文中获取当前用户ID
+	userID, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "未登录"})
+		return
+	}
+
+	user, err := h.userService.GetUserByID(userID.(uint))
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户信息失败"})
+		return
+	}
+
+	c.JSON(http.StatusOK, user)
 } 

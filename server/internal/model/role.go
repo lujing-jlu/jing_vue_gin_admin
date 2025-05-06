@@ -24,16 +24,17 @@ type UpdateRoleRequest struct {
 const (
 	PermissionUserView   = "user:view"   // 查看用户
 	PermissionUserCreate = "user:create" // 创建用户
-	PermissionUserEdit   = "user:edit"   // 编辑用户
+	PermissionUserEdit   = "user:update" // 编辑用户
 	PermissionUserDelete = "user:delete" // 删除用户
 	
 	PermissionRoleView   = "role:view"   // 查看角色
 	PermissionRoleCreate = "role:create" // 创建角色
-	PermissionRoleEdit   = "role:edit"   // 编辑角色
+	PermissionRoleEdit   = "role:update" // 编辑角色
 	PermissionRoleDelete = "role:delete" // 删除角色
 
 	PermissionSystemConfig = "system:config" // 系统配置
-	PermissionSystemLog   = "system:log"    // 系统日志
+	PermissionSystemLog    = "log:view"      // 查看日志
+	PermissionLogDelete    = "log:delete"    // 删除日志
 )
 
 // 内容管理权限
@@ -73,4 +74,12 @@ const (
 	PermissionStatView    = "stat:view"    // 查看统计
 	PermissionStatExport  = "stat:export"  // 导出统计
 	PermissionStatManage  = "stat:manage"  // 管理统计
+)
+
+// 文件管理权限
+const (
+	PermissionFileView   = "file:view"   // 查看文件
+	PermissionFileUpload = "file:upload" // 上传文件
+	PermissionFileUpdate = "file:update" // 更新文件
+	PermissionFileDelete = "file:delete" // 删除文件
 ) 

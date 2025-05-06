@@ -69,10 +69,17 @@
                 <el-avatar :size="60" :src="form.avatar || defaultAvatar" class="mr-4">
                   {{ form.nickname?.[0] || 'U' }}
                 </el-avatar>
-                <el-button class="text-gray-600">
-                  <el-icon class="mr-1"><Upload /></el-icon>
-                  上传头像
-                </el-button>
+                <el-upload
+                  class="avatar-uploader"
+                  accept="image/*"
+                  :show-file-list="false"
+                  :before-upload="handleAvatarUpload"
+                >
+                  <el-button class="text-gray-600">
+                    <el-icon class="mr-1"><Upload /></el-icon>
+                    上传头像
+                  </el-button>
+                </el-upload>
               </div>
             </el-form-item>
             <el-divider content-position="left">安全设置</el-divider>
@@ -161,10 +168,11 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { Upload, Lock, Check } from '@element-plus/icons-vue'
-import type { FormInstance } from 'element-plus'
+import type { FormInstance, UploadProps } from 'element-plus'
 import { ElMessage } from 'element-plus'
 import { useUserStore } from '@/stores/user'
 import { updateProfile, changePassword } from '@/api/user'
+import { uploadFile } from '@/api/file'
 import type { ChangePasswordRequest } from '@/api/user'
 
 // 默认头像
@@ -226,6 +234,32 @@ const pwdRules = {
       trigger: 'blur' 
     }
   ]
+}
+
+// 头像上传相关
+const handleAvatarUpload: UploadProps['beforeUpload'] = async (file) => {
+  // 验证文件类型
+  const isImage = file.type.startsWith('image/')
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件！')
+    return false
+  }
+
+  // 验证文件大小（2MB）
+  const isLt2M = file.size / 1024 / 1024 < 2
+  if (!isLt2M) {
+    ElMessage.error('图片大小不能超过 2MB！')
+    return false
+  }
+
+  try {
+    const res = await uploadFile(file, 'avatar')
+    form.avatar = res.url
+    ElMessage.success('头像上传成功')
+  } catch (error) {
+    ElMessage.error('头像上传失败')
+  }
+  return false
 }
 
 // 格式化日期
@@ -375,5 +409,30 @@ onMounted(() => {
 :deep(.el-divider__text) {
   font-weight: 600;
   color: #4b5563;
+}
+
+:deep(.avatar-uploader) {
+  display: inline-block;
+}
+
+:deep(.avatar-uploader .el-upload) {
+  border: 1px dashed #d9d9d9;
+  border-radius: 6px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s;
+}
+
+:deep(.avatar-uploader .el-upload:hover) {
+  border-color: #409eff;
+}
+
+:deep(.avatar-uploader .el-icon.avatar-uploader-icon) {
+  font-size: 28px;
+  color: #8c939d;
+  width: 178px;
+  height: 178px;
+  text-align: center;
 }
 </style> 

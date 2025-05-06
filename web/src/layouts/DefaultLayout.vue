@@ -27,6 +27,10 @@
             <el-icon><Setting /></el-icon>
             <span>角色管理</span>
           </el-menu-item>
+          <el-menu-item index="/files" class="hover:bg-gray-800 transition-colors" style="color: #ffffff !important">
+            <el-icon><Files /></el-icon>
+            <span>文件管理</span>
+          </el-menu-item>
           
           <div class="px-4 py-3 text-xs uppercase text-gray-500 font-semibold mt-4">
             系统管理
@@ -87,7 +91,7 @@
 </template>
 
 <script setup lang="ts">
-import { HomeFilled, ArrowDown, Fold, User, SwitchButton, Setting, Bell, Tools, Document } from '@element-plus/icons-vue'
+import { HomeFilled, ArrowDown, Fold, User, SwitchButton, Setting, Bell, Tools, Document, Files } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'

@@ -121,4 +121,37 @@ func (s *RoleService) GetAllPermissions() map[string][]PermissionInfo {
 type PermissionInfo struct {
 	Value string `json:"value"`
 	Label string `json:"label"`
+}
+
+// GetRoles 获取角色列表，支持分页和搜索
+func (s *RoleService) GetRoles(page, pageSize int, keyword string, status *int) (map[string]interface{}, error) {
+	var roles []model.Role
+	var total int64
+	
+	query := config.DB.Model(&model.Role{})
+	
+	// 应用搜索条件
+	if keyword != "" {
+		query = query.Where("name LIKE ? OR description LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
+	}
+	
+	if status != nil {
+		query = query.Where("status = ?", *status)
+	}
+	
+	// 计算总记录数
+	if err := query.Count(&total).Error; err != nil {
+		return nil, err
+	}
+	
+	// 获取分页数据
+	offset := (page - 1) * pageSize
+	if err := query.Offset(offset).Limit(pageSize).Find(&roles).Error; err != nil {
+		return nil, err
+	}
+	
+	return map[string]interface{}{
+		"total": total,
+		"list":  roles,
+	}, nil
 } 

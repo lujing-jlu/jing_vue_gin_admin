@@ -11,6 +11,7 @@
 - 🛡️ 支持细粒度的权限控制
 - 📊 系统数据可视化展示
 - 🌐 响应式设计，支持多种设备
+- 📂 文件管理与存储功能
 
 ## 技术栈
 
@@ -54,6 +55,12 @@
    - 系统运行状态概览
    - 用户活跃度统计
    - 操作趋势分析
+
+6. **文件管理**
+   - 文件上传与下载
+   - 文件分类管理
+   - 文件权限控制
+   - 文件统计分析
 
 ## 安装与运行
 
@@ -100,6 +107,7 @@ go run cmd/main.go
 - 数据库连接信息
 - JWT密钥和过期时间
 - 服务监听地址和端口
+- 文件上传存储路径
 
 ## 项目截图
 
@@ -107,6 +115,7 @@ go run cmd/main.go
 ![用户管理](https://example.com/user-management.png)
 ![角色管理](https://example.com/role-management.png)
 ![系统日志](https://example.com/system-logs.png)
+![文件管理](https://example.com/file-management.png)
 
 ## 开发计划
 
@@ -116,6 +125,8 @@ go run cmd/main.go
 - [ ] 支持第三方登录
 - [ ] 多语言国际化支持
 - [ ] 深色模式主题
+- [x] 文件管理功能
+- [ ] 图片预览与处理
 
 ## 贡献指南
 

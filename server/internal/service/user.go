@@ -148,4 +148,57 @@ func (s *UserService) ChangePassword(id uint, oldPassword string, newPassword st
 
 	// 更新密码
 	return config.DB.Model(&user).Update("password", string(hashedPassword)).Error
+}
+
+// GetUsers 获取用户列表，支持分页和搜索
+func (s *UserService) GetUsers(page, pageSize int, keyword, role string, status *int) (map[string]interface{}, error) {
+	var users []model.User
+	var total int64
+	
+	query := config.DB.Model(&model.User{})
+	
+	// 应用搜索条件
+	if keyword != "" {
+		query = query.Where("username LIKE ? OR nickname LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
+	}
+	
+	if role != "" {
+		query = query.Where("role = ?", role)
+	}
+	
+	if status != nil {
+		query = query.Where("status = ?", *status)
+	}
+	
+	// 计算总记录数
+	if err := query.Count(&total).Error; err != nil {
+		return nil, err
+	}
+	
+	// 获取分页数据
+	offset := (page - 1) * pageSize
+	if err := query.Offset(offset).Limit(pageSize).Find(&users).Error; err != nil {
+		return nil, err
+	}
+	
+	return map[string]interface{}{
+		"total": total,
+		"list":  users,
+	}, nil
+}
+
+// DeleteUser 删除用户
+func (s *UserService) DeleteUser(id uint) error {
+	if err := config.DB.Delete(&model.User{}, id).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+// UpdateUserStatus 更新用户状态
+func (s *UserService) UpdateUserStatus(id uint, status int) error {
+	if err := config.DB.Model(&model.User{}).Where("id = ?", id).Update("status", status).Error; err != nil {
+		return err
+	}
+	return nil
 } 

@@ -13,9 +13,92 @@ import (
 func main() {
 	// 初始化数据库
 	if err := config.InitDB(); err != nil {
-		log.Fatal("Failed to initialize database:", err)
+		log.Fatalf("数据库初始化失败: %v", err)
 	}
 
+	// 创建默认管理员角色和用户
+	createDefaultAdminRoleAndUser()
+
+	// 初始化Gin框架
+	r := gin.Default()
+
+	// 允许跨域
+	r.Use(middleware.Cors())
+
+	// 创建各种处理器实例
+	userHandler := handler.NewUserHandler()
+	roleHandler := handler.NewRoleHandler()
+	logHandler := handler.NewLogHandler()
+	fileHandler := handler.NewFileHandler() // 添加文件处理器
+
+	// API路由组
+	api := r.Group("/api")
+
+	// 公共路由组
+	public := api.Group("")
+	public.Use(middleware.LoginLogMiddleware())
+	{
+		public.POST("/login", userHandler.Login)
+	}
+
+	// 需要身份验证的路由组
+	auth := api.Group("")
+	auth.Use(middleware.AuthMiddleware())
+	{
+		// 用户相关路由
+		userRoutes := auth.Group("/users")
+		{
+			userRoutes.GET("", middleware.RequirePermission("user:view"), middleware.OperationLog("user", "view"), userHandler.GetUsers)
+			userRoutes.GET("/:id", middleware.RequirePermission("user:view"), middleware.OperationLog("user", "view"), userHandler.GetUser)
+			userRoutes.POST("", middleware.RequirePermission("user:create"), middleware.OperationLog("user", "create"), userHandler.CreateUser)
+			userRoutes.PUT("/:id", middleware.RequirePermission("user:update"), middleware.OperationLog("user", "update"), userHandler.UpdateUser)
+			userRoutes.DELETE("/:id", middleware.RequirePermission("user:delete"), middleware.OperationLog("user", "delete"), userHandler.DeleteUser)
+			userRoutes.PUT("/:id/status", middleware.RequirePermission("user:update"), middleware.OperationLog("user", "update"), userHandler.UpdateUserStatus)
+			userRoutes.GET("/current", userHandler.GetCurrentUser)
+		}
+
+		// 角色相关路由
+		roleRoutes := auth.Group("/roles")
+		{
+			roleRoutes.GET("", middleware.RequirePermission("role:view"), middleware.OperationLog("role", "view"), roleHandler.GetRoles)
+			roleRoutes.GET("/:id", middleware.RequirePermission("role:view"), middleware.OperationLog("role", "view"), roleHandler.GetRole)
+			roleRoutes.POST("", middleware.RequirePermission("role:create"), middleware.OperationLog("role", "create"), roleHandler.CreateRole)
+			roleRoutes.PUT("/:id", middleware.RequirePermission("role:update"), middleware.OperationLog("role", "update"), roleHandler.UpdateRole)
+			roleRoutes.DELETE("/:id", middleware.RequirePermission("role:delete"), middleware.OperationLog("role", "delete"), roleHandler.DeleteRole)
+			roleRoutes.GET("/all/permissions", middleware.RequirePermission("role:view"), roleHandler.GetAllPermissions)
+		}
+
+		// 日志相关路由
+		logRoutes := auth.Group("/logs")
+		{
+			logRoutes.GET("", middleware.RequirePermission("log:view"), middleware.OperationLog("system", "view"), logHandler.GetLogList)
+			logRoutes.DELETE("", middleware.RequirePermission("log:delete"), middleware.OperationLog("system", "delete"), logHandler.DeleteLogs)
+			logRoutes.DELETE("/clear", middleware.RequirePermission("log:delete"), middleware.OperationLog("system", "delete"), logHandler.ClearLogs)
+			logRoutes.GET("/modules", middleware.RequirePermission("log:view"), logHandler.GetLogModules)
+			logRoutes.GET("/actions", middleware.RequirePermission("log:view"), logHandler.GetLogActions)
+		}
+
+		// 文件相关路由
+		fileRoutes := auth.Group("/files")
+		{
+			fileRoutes.POST("", middleware.RequirePermission("file:upload"), middleware.OperationLog("system", "create"), fileHandler.UploadFile)
+			fileRoutes.GET("", middleware.RequirePermission("file:view"), middleware.OperationLog("system", "view"), fileHandler.GetFileList)
+			fileRoutes.GET("/:id", middleware.RequirePermission("file:view"), middleware.OperationLog("system", "view"), fileHandler.GetFile)
+			fileRoutes.PUT("", middleware.RequirePermission("file:update"), middleware.OperationLog("system", "update"), fileHandler.UpdateFile)
+			fileRoutes.DELETE("/:id", middleware.RequirePermission("file:delete"), middleware.OperationLog("system", "delete"), fileHandler.DeleteFile)
+			fileRoutes.POST("/batch/delete", middleware.RequirePermission("file:delete"), middleware.OperationLog("system", "delete"), fileHandler.BatchDeleteFiles)
+			fileRoutes.GET("/download/:id", middleware.OperationLog("system", "view"), fileHandler.DownloadFile)
+			fileRoutes.GET("/stats", middleware.RequirePermission("file:view"), fileHandler.GetFileStats)
+			fileRoutes.GET("/categories", middleware.RequirePermission("file:view"), fileHandler.GetCategories)
+			fileRoutes.GET("/types", middleware.RequirePermission("file:view"), fileHandler.GetFileTypes)
+		}
+	}
+
+	// 启动服务器
+	r.Run(":8080")
+}
+
+func createDefaultAdminRoleAndUser() {
 	// 创建测试用户和角色
 	var count int64
 	config.DB.Model(&model.User{}).Count(&count)
@@ -36,6 +119,11 @@ func main() {
 				model.PermissionRoleDelete,
 				model.PermissionSystemConfig,
 				model.PermissionSystemLog,
+				model.PermissionLogDelete,
+				model.PermissionFileView,
+				model.PermissionFileUpload,
+				model.PermissionFileUpdate,
+				model.PermissionFileDelete,
 			},
 		}
 		if err := config.DB.Create(adminRole).Error; err != nil {
@@ -60,65 +148,5 @@ func main() {
 			log.Fatal("Failed to create test user:", err)
 		}
 		log.Println("Created test user: admin/123456")
-	}
-
-	r := gin.Default()
-
-	// 允许跨域
-	r.Use(func(c *gin.Context) {
-		c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
-		c.Writer.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Writer.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		if c.Request.Method == "OPTIONS" {
-			c.AbortWithStatus(204)
-			return
-		}
-		c.Next()
-	})
-
-	// 创建处理器
-	userHandler := handler.NewUserHandler()
-	roleHandler := handler.NewRoleHandler()
-	logHandler := handler.NewLogHandler()
-
-	// 公开路由
-	public := r.Group("/api")
-	public.Use(middleware.LoginLogMiddleware())
-	{
-		public.POST("/login", userHandler.Login)
-	}
-
-	// 需要认证的路由
-	authorized := r.Group("/api")
-	authorized.Use(middleware.AuthMiddleware())
-	{
-		// 用户管理API
-		authorized.GET("/users", middleware.RequirePermission(model.PermissionUserView), middleware.OperationLog(model.LogModuleUser, model.LogActionView), userHandler.GetUserList)
-		authorized.POST("/users", middleware.RequirePermission(model.PermissionUserCreate), middleware.OperationLog(model.LogModuleUser, model.LogActionCreate), userHandler.CreateUser)
-		authorized.PUT("/users/:id", middleware.RequirePermission(model.PermissionUserEdit), middleware.OperationLog(model.LogModuleUser, model.LogActionUpdate), userHandler.UpdateUser)
-		authorized.PUT("/users/:id/status", middleware.RequirePermission(model.PermissionUserEdit), middleware.OperationLog(model.LogModuleUser, model.LogActionUpdate), userHandler.ToggleUserStatus)
-
-		// 个人信息API（无需特殊权限）
-		authorized.PUT("/user/profile", middleware.OperationLog(model.LogModuleUser, model.LogActionUpdate), userHandler.UpdateProfile)
-		authorized.PUT("/user/password", middleware.OperationLog(model.LogModuleUser, model.LogActionUpdate), userHandler.ChangePassword)
-
-		// 角色管理API
-		authorized.GET("/roles", middleware.RequirePermission(model.PermissionRoleView), middleware.OperationLog(model.LogModuleRole, model.LogActionView), roleHandler.GetRoleList)
-		authorized.POST("/roles", middleware.RequirePermission(model.PermissionRoleCreate), middleware.OperationLog(model.LogModuleRole, model.LogActionCreate), roleHandler.CreateRole)
-		authorized.PUT("/roles/:id", middleware.RequirePermission(model.PermissionRoleEdit), middleware.OperationLog(model.LogModuleRole, model.LogActionUpdate), roleHandler.UpdateRole)
-		authorized.DELETE("/roles/:id", middleware.RequirePermission(model.PermissionRoleDelete), middleware.OperationLog(model.LogModuleRole, model.LogActionDelete), roleHandler.DeleteRole)
-		authorized.PUT("/roles/:id/status", middleware.RequirePermission(model.PermissionRoleEdit), middleware.OperationLog(model.LogModuleRole, model.LogActionUpdate), roleHandler.ToggleRoleStatus)
-		authorized.GET("/permissions", middleware.RequirePermission(model.PermissionRoleView), roleHandler.GetAllPermissions)
-
-		// 系统日志API
-		authorized.GET("/logs", middleware.RequirePermission(model.PermissionSystemLog), middleware.OperationLog(model.LogModuleSystem, model.LogActionView), logHandler.GetLogList)
-		authorized.DELETE("/logs", middleware.RequirePermission(model.PermissionSystemLog), middleware.OperationLog(model.LogModuleSystem, model.LogActionDelete), logHandler.DeleteLogs)
-		authorized.DELETE("/logs/clear", middleware.RequirePermission(model.PermissionSystemLog), middleware.OperationLog(model.LogModuleSystem, model.LogActionDelete), logHandler.ClearLogs)
-		authorized.GET("/logs/modules", middleware.RequirePermission(model.PermissionSystemLog), logHandler.GetLogModules)
-		authorized.GET("/logs/actions", middleware.RequirePermission(model.PermissionSystemLog), logHandler.GetLogActions)
-	}
-
-	if err := r.Run(":8080"); err != nil {
-		log.Fatal("Failed to start server:", err)
 	}
 }

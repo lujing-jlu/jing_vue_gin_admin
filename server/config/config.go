@@ -8,6 +8,7 @@ import (
 
 var DB *gorm.DB
 
+// InitDB 初始化数据库
 func InitDB() error {
 	var err error
 	DB, err = gorm.Open(sqlite.Open("admin.db"), &gorm.Config{})
@@ -15,8 +16,8 @@ func InitDB() error {
 		return err
 	}
 
-	// 自动迁移数据库表
-	err = DB.AutoMigrate(&model.User{}, &model.Role{}, &model.SystemLog{})
+	// 自动迁移表结构
+	err = DB.AutoMigrate(&model.User{}, &model.Role{}, &model.SystemLog{}, &model.File{})
 	if err != nil {
 		return err
 	}
