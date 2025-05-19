@@ -15,6 +15,30 @@
       </el-button>
     </div>
 
+    <el-card class="border-0 shadow-sm rounded-xl overflow-hidden mb-4">
+      <div class="mb-4 flex flex-wrap gap-4">
+        <el-input 
+          v-model="searchQuery" 
+          placeholder="搜索角色名称/描述" 
+          class="max-w-xs" 
+          clearable
+          prefix-icon="Search"
+        />
+        <el-select v-model="filterStatus" placeholder="状态" class="w-32" clearable>
+          <el-option label="正常" :value="1" />
+          <el-option label="禁用" :value="0" />
+        </el-select>
+        <el-button type="primary" plain class="text-blue-600" @click="handleSearch">
+          <el-icon class="mr-1"><Search /></el-icon>
+          搜索
+        </el-button>
+        <el-button class="text-gray-600" @click="handleReset">
+          <el-icon class="mr-1"><Refresh /></el-icon>
+          重置
+        </el-button>
+      </div>
+    </el-card>
+
     <el-card class="border-0 shadow-sm rounded-xl overflow-hidden">
       <!-- 角色列表 -->
       <el-table 
@@ -78,6 +102,20 @@
           </template>
         </el-table-column>
       </el-table>
+
+      <div class="flex justify-end mt-4">
+        <el-pagination
+          v-model:current-page="currentPage"
+          v-model:page-size="pageSize"
+          :page-sizes="[10, 20, 50, 100]"
+          layout="total, sizes, prev, pager, next, jumper"
+          :total="total"
+          background
+          class="!p-0"
+          @size-change="handleSizeChange"
+          @current-change="handleCurrentChange"
+        />
+      </div>
     </el-card>
 
     <!-- 角色表单对话框 -->
@@ -156,7 +194,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { Plus, Edit, Lock, Unlock } from '@element-plus/icons-vue'
+import { Plus, Edit, Lock, Unlock, Search, Refresh } from '@element-plus/icons-vue'
 import type { FormInstance } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
@@ -169,7 +207,9 @@ import {
   type Role,
   type CreateRoleRequest,
   type UpdateRoleRequest,
-  type PermissionGroup
+  type PermissionGroup,
+  type PermissionInfo,
+  type RoleListRequest
 } from '@/api/role'
 
 // 角色列表数据
@@ -177,6 +217,11 @@ const roles = ref<Role[]>([])
 const loading = ref(false)
 const submitting = ref(false)
 const permissions = ref<PermissionGroup>({})
+const searchQuery = ref('')
+const filterStatus = ref<number | ''>('')
+const currentPage = ref(1)
+const pageSize = ref(10)
+const total = ref(0)
 
 // 对话框相关
 const dialogVisible = ref(false)
@@ -209,8 +254,18 @@ const rules = {
 const fetchRoles = async () => {
   try {
     loading.value = true
-    roles.value = await getRoleList()
+    const params: RoleListRequest = {
+      page: currentPage.value,
+      page_size: pageSize.value,
+      keyword: searchQuery.value || undefined,
+      status: filterStatus.value !== '' ? Number(filterStatus.value) : undefined
+    }
+    
+    const res = await getRoleList(params)
+    roles.value = res.list
+    total.value = res.total
   } catch (error) {
+    console.error('获取角色列表失败:', error)
     ElMessage.error('获取角色列表失败')
   } finally {
     loading.value = false
@@ -222,6 +277,7 @@ const fetchPermissions = async () => {
   try {
     permissions.value = await getAllPermissions()
   } catch (error) {
+    console.error('获取权限列表失败:', error)
     ElMessage.error('获取权限列表失败')
   }
 }
@@ -250,45 +306,45 @@ const isModuleIndeterminate = (module: string) => {
   return selectedCount > 0 && selectedCount < modulePerms.length
 }
 
-// 处理模块全选/取消全选
-const handleModuleCheckAll = (module: string, checked: boolean) => {
+// 模块全选/取消全选
+const handleModuleCheckAll = (module: string, val: boolean) => {
   const modulePerms = permissions.value[module]
-  if (checked) {
-    // 添加模块所有权限
+  if (val) {
+    // 全选
     modulePerms.forEach(perm => {
       if (!form.value.permissions.includes(perm.value)) {
         form.value.permissions.push(perm.value)
       }
     })
   } else {
-    // 移除模块所有权限
+    // 取消全选
     form.value.permissions = form.value.permissions.filter(
-      perm => !modulePerms.some(p => p.value === perm)
+      value => !modulePerms.some(perm => perm.value === value)
     )
   }
 }
 
-// 新增角色
+// 添加角色
 const handleAdd = () => {
   dialogType.value = 'add'
-  currentId.value = undefined
   form.value = {
     name: '',
     description: '',
     permissions: []
   }
+  currentId.value = undefined
   dialogVisible.value = true
 }
 
 // 编辑角色
 const handleEdit = (row: Role) => {
   dialogType.value = 'edit'
-  currentId.value = row.id
   form.value = {
     name: row.name,
     description: row.description,
     permissions: [...row.permissions]
   }
+  currentId.value = row.id
   dialogVisible.value = true
 }
 
@@ -302,16 +358,16 @@ const handleToggleStatus = async (row: Role) => {
       {
         confirmButtonText: '确定',
         cancelButtonText: '取消',
-        type: 'warning',
-        customClass: 'rounded-lg'
+        type: 'warning'
       }
     )
+    
     await toggleRoleStatus(row.id)
     ElMessage.success(`${action}成功`)
-    await fetchRoles()
+    fetchRoles()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(`${action}失败`)
+      console.error('操作失败:', error)
     }
   }
 }
@@ -320,29 +376,58 @@ const handleToggleStatus = async (row: Role) => {
 const handleSubmit = async () => {
   if (!formRef.value) return
   
-  try {
-    await formRef.value.validate()
-    submitting.value = true
-    
-    if (dialogType.value === 'add') {
-      await createRole(form.value)
-      ElMessage.success('创建成功')
-    } else {
-      if (!currentId.value) return
-      await updateRole(currentId.value, form.value)
-      ElMessage.success('更新成功')
+  await formRef.value.validate(async (valid) => {
+    if (valid) {
+      try {
+        submitting.value = true
+        
+        if (dialogType.value === 'add') {
+          await createRole(form.value)
+          ElMessage.success('添加角色成功')
+        } else if (currentId.value) {
+          await updateRole(currentId.value, form.value)
+          ElMessage.success('更新角色成功')
+        }
+        
+        dialogVisible.value = false
+        fetchRoles()
+      } catch (error) {
+        console.error('提交失败:', error)
+        ElMessage.error('操作失败')
+      } finally {
+        submitting.value = false
+      }
     }
-    
-    dialogVisible.value = false
-    await fetchRoles()
-  } catch (error) {
-    ElMessage.error(dialogType.value === 'add' ? '创建失败' : '更新失败')
-  } finally {
-    submitting.value = false
-  }
+  })
 }
 
-// 初始化
+// 搜索角色
+const handleSearch = () => {
+  currentPage.value = 1
+  fetchRoles()
+}
+
+// 重置搜索条件
+const handleReset = () => {
+  searchQuery.value = ''
+  filterStatus.value = ''
+  currentPage.value = 1
+  fetchRoles()
+}
+
+// 页码变化
+const handleCurrentChange = (page: number) => {
+  currentPage.value = page
+  fetchRoles()
+}
+
+// 每页条数变化
+const handleSizeChange = (size: number) => {
+  pageSize.value = size
+  currentPage.value = 1
+  fetchRoles()
+}
+
 onMounted(() => {
   fetchRoles()
   fetchPermissions()
@@ -354,20 +439,11 @@ onMounted(() => {
   box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   border: 1px solid #e5e7eb;
   border-radius: 0.5rem;
-  padding: 0 1rem;
-}
-
-:deep(.el-input__wrapper:hover) {
-  border-color: #d1d5db;
 }
 
 :deep(.el-input__wrapper.is-focus) {
   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
   border-color: #3b82f6;
-}
-
-:deep(.el-input__inner) {
-  height: 2.5rem;
 }
 
 :deep(.el-button) {
@@ -378,68 +454,5 @@ onMounted(() => {
 :deep(.el-button:hover) {
   transform: translateY(-1px);
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-}
-
-:deep(.el-table) {
-  border-radius: 0.5rem;
-  overflow: hidden;
-}
-
-:deep(.el-table th) {
-  font-weight: 600;
-}
-
-:deep(.el-table td) {
-  padding: 0.75rem;
-}
-
-:deep(.el-tag) {
-  border-radius: 9999px;
-  padding: 0.25rem 0.75rem;
-}
-
-:deep(.el-tag--danger.is-plain) {
-  background-color: #fee2e2;
-  border-color: #fee2e2;
-  color: #dc2626;
-}
-
-:deep(.el-tag--success.is-plain) {
-  background-color: #dcfce7;
-  border-color: #dcfce7;
-  color: #16a34a;
-}
-
-:deep(.el-tag--info.is-plain) {
-  background-color: #f3f4f6;
-  border-color: #f3f4f6;
-  color: #4b5563;
-}
-
-:deep(.el-dialog) {
-  border-radius: 0.75rem;
-  overflow: hidden;
-}
-
-:deep(.el-dialog__header) {
-  margin: 0;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid #f3f4f6;
-  font-weight: 600;
-}
-
-:deep(.el-dialog__body) {
-  padding: 1.5rem;
-}
-
-:deep(.el-dialog__footer) {
-  padding: 1rem 1.5rem;
-  border-top: 1px solid #f3f4f6;
-}
-
-.role-dialog :deep(.el-overlay-dialog) {
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 </style> 

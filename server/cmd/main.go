@@ -30,6 +30,7 @@ func main() {
 	roleHandler := handler.NewRoleHandler()
 	logHandler := handler.NewLogHandler()
 	fileHandler := handler.NewFileHandler() // 添加文件处理器
+	dashboardHandler := handler.NewDashboardHandler() // 添加仪表盘处理器
 
 	// API路由组
 	api := r.Group("/api")
@@ -91,6 +92,17 @@ func main() {
 			fileRoutes.GET("/stats", middleware.RequirePermission("file:view"), fileHandler.GetFileStats)
 			fileRoutes.GET("/categories", middleware.RequirePermission("file:view"), fileHandler.GetCategories)
 			fileRoutes.GET("/types", middleware.RequirePermission("file:view"), fileHandler.GetFileTypes)
+		}
+
+		// 仪表盘相关路由
+		dashboardRoutes := auth.Group("/dashboard")
+		{
+			dashboardRoutes.GET("/stats", dashboardHandler.GetDashboardStats)
+			dashboardRoutes.GET("/system-info", dashboardHandler.GetSystemInfo)
+			dashboardRoutes.GET("/user-activities", dashboardHandler.GetUserActivities)
+			dashboardRoutes.GET("/file-types", dashboardHandler.GetFileTypeDistribution)
+			dashboardRoutes.GET("/log-types", dashboardHandler.GetLogTypeDistribution)
+			dashboardRoutes.GET("/recent-registrations", dashboardHandler.GetRecentRegistrations)
 		}
 	}
 

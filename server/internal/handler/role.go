@@ -18,14 +18,29 @@ func NewRoleHandler() *RoleHandler {
 	}
 }
 
-// GetRoleList 获取角色列表
-func (h *RoleHandler) GetRoleList(c *gin.Context) {
-	roles, err := h.roleService.GetRoleList()
+// GetRoles 获取角色列表，带分页和搜索功能
+func (h *RoleHandler) GetRoles(c *gin.Context) {
+	page := c.DefaultQuery("page", "1")
+	pageSize := c.DefaultQuery("page_size", "10")
+	keyword := c.DefaultQuery("keyword", "")
+	status := c.DefaultQuery("status", "")
+
+	pageInt, _ := strconv.Atoi(page)
+	pageSizeInt, _ := strconv.Atoi(pageSize)
+	statusInt, _ := strconv.Atoi(status)
+
+	var statusFilter *int
+	if status != "" {
+		statusFilter = &statusInt
+	}
+
+	result, err := h.roleService.GetRoles(pageInt, pageSizeInt, keyword, statusFilter)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取角色列表失败"})
 		return
 	}
-	c.JSON(http.StatusOK, roles)
+
+	c.JSON(http.StatusOK, result)
 }
 
 // CreateRole 创建角色
@@ -112,31 +127,6 @@ func (h *RoleHandler) ToggleRoleStatus(c *gin.Context) {
 func (h *RoleHandler) GetAllPermissions(c *gin.Context) {
 	permissions := h.roleService.GetAllPermissions()
 	c.JSON(http.StatusOK, permissions)
-}
-
-// GetRoles 获取角色列表，带分页和搜索功能
-func (h *RoleHandler) GetRoles(c *gin.Context) {
-	page := c.DefaultQuery("page", "1")
-	pageSize := c.DefaultQuery("page_size", "10")
-	keyword := c.DefaultQuery("keyword", "")
-	status := c.DefaultQuery("status", "")
-
-	pageInt, _ := strconv.Atoi(page)
-	pageSizeInt, _ := strconv.Atoi(pageSize)
-	statusInt, _ := strconv.Atoi(status)
-
-	var statusFilter *int
-	if status != "" {
-		statusFilter = &statusInt
-	}
-
-	result, err := h.roleService.GetRoles(pageInt, pageSizeInt, keyword, statusFilter)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取角色列表失败"})
-		return
-	}
-
-	c.JSON(http.StatusOK, result)
 }
 
 // GetRole 获取角色详情

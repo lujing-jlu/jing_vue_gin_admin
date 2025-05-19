@@ -110,6 +110,12 @@ func (s *RoleService) GetAllPermissions() map[string][]PermissionInfo {
 			{Value: model.PermissionMediaEdit, Label: "编辑媒体"},
 			{Value: model.PermissionMediaDelete, Label: "删除媒体"},
 		},
+		"文件管理": {
+			{Value: model.PermissionFileView, Label: "查看文件"},
+			{Value: model.PermissionFileUpload, Label: "上传文件"},
+			{Value: model.PermissionFileUpdate, Label: "编辑文件"},
+			{Value: model.PermissionFileDelete, Label: "删除文件"},
+		},
 		"数据统计": {
 			{Value: model.PermissionStatView, Label: "查看统计"},
 			{Value: model.PermissionStatExport, Label: "导出统计"},

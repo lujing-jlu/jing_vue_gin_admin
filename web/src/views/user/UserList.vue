@@ -33,11 +33,11 @@
           <el-option label="正常" :value="1" />
           <el-option label="禁用" :value="0" />
         </el-select>
-        <el-button type="primary" plain class="text-blue-600">
+        <el-button type="primary" plain class="text-blue-600" @click="handleSearch">
           <el-icon class="mr-1"><Search /></el-icon>
           搜索
         </el-button>
-        <el-button class="text-gray-600">
+        <el-button class="text-gray-600" @click="handleReset">
           <el-icon class="mr-1"><Refresh /></el-icon>
           重置
         </el-button>
@@ -114,9 +114,11 @@
           v-model:page-size="pageSize"
           :page-sizes="[10, 20, 50, 100]"
           layout="total, sizes, prev, pager, next, jumper"
-          :total="100"
+          :total="totalCount"
           background
           class="!p-0"
+          @current-change="handleCurrentChange"
+          @size-change="handleSizeChange"
         />
       </div>
     </el-card>
@@ -193,7 +195,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { Plus, Edit, Lock, Unlock, Search, Refresh } from '@element-plus/icons-vue'
 import type { FormInstance } from 'element-plus'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getUserList, createUser, updateUser, toggleUserStatus, type User, type CreateUserRequest, type UpdateUserRequest } from '@/api/user'
+import { getUserList, createUser, updateUser, toggleUserStatus, type User, type CreateUserRequest, type UpdateUserRequest, type UserListRequest } from '@/api/user'
 import { getRoleList, type Role } from '@/api/role'
 
 const userList = ref<User[]>([])
@@ -204,9 +206,10 @@ const dialogType = ref<'add' | 'edit'>('add')
 const formRef = ref<FormInstance>()
 const searchQuery = ref('')
 const filterRole = ref('')
-const filterStatus = ref('')
+const filterStatus = ref<number | ''>('')
 const currentPage = ref(1)
 const pageSize = ref(10)
+const totalCount = ref(0)
 const roles = ref<Role[]>([])
 
 const form = reactive({
@@ -238,10 +241,20 @@ const rules = {
 const fetchUserList = async () => {
   try {
     loading.value = true
-    const res = await getUserList()
-    userList.value = res
+    const params: UserListRequest = {
+      page: currentPage.value,
+      page_size: pageSize.value,
+      keyword: searchQuery.value || undefined,
+      role: filterRole.value || undefined,
+      status: filterStatus.value !== '' ? Number(filterStatus.value) : undefined
+    }
+    
+    const res = await getUserList(params)
+    userList.value = res.list
+    totalCount.value = res.total
   } catch (error) {
     console.error('Failed to fetch user list:', error)
+    ElMessage.error('获取用户列表失败')
   } finally {
     loading.value = false
   }
@@ -326,6 +339,34 @@ const handleSubmit = async () => {
       }
     }
   })
+}
+
+// 搜索用户
+const handleSearch = () => {
+  currentPage.value = 1 // 重置页码
+  fetchUserList()
+}
+
+// 重置筛选条件
+const handleReset = () => {
+  searchQuery.value = ''
+  filterRole.value = ''
+  filterStatus.value = ''
+  currentPage.value = 1
+  fetchUserList()
+}
+
+// 页码变化
+const handleCurrentChange = (page: number) => {
+  currentPage.value = page
+  fetchUserList()
+}
+
+// 每页条数变化
+const handleSizeChange = (size: number) => {
+  pageSize.value = size
+  currentPage.value = 1
+  fetchUserList()
 }
 
 onMounted(() => {

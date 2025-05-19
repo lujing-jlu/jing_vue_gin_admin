@@ -28,14 +28,27 @@ export interface PermissionInfo {
 }
 
 export interface PermissionGroup {
-  [key: string]: string[]
+  [key: string]: PermissionInfo[]
+}
+
+export interface RoleListResponse {
+  total: number
+  list: Role[]
+}
+
+export interface RoleListRequest {
+  page?: number
+  page_size?: number
+  keyword?: string
+  status?: number
 }
 
 // 获取角色列表
-export const getRoleList = () => {
-  return request<Role[]>({
+export const getRoleList = (params: RoleListRequest = {}) => {
+  return request<RoleListResponse>({
     url: '/roles',
-    method: 'get'
+    method: 'get',
+    params
   })
 }
 
@@ -76,7 +89,7 @@ export const toggleRoleStatus = (id: number) => {
 // 获取所有权限
 export const getAllPermissions = () => {
   return request<PermissionGroup>({
-    url: '/permissions',
+    url: '/roles/all/permissions',
     method: 'get'
   })
 } 

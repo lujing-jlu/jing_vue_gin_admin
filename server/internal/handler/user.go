@@ -57,14 +57,31 @@ func (h *UserHandler) CreateUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "创建用户成功"})
 }
 
-// GetUserList 获取用户列表
-func (h *UserHandler) GetUserList(c *gin.Context) {
-	users, err := h.userService.GetUserList()
+// GetUsers 获取用户列表
+func (h *UserHandler) GetUsers(c *gin.Context) {
+	// 实现分页和搜索功能
+	page := c.DefaultQuery("page", "1")
+	pageSize := c.DefaultQuery("page_size", "10")
+	keyword := c.DefaultQuery("keyword", "")
+	role := c.DefaultQuery("role", "")
+	status := c.DefaultQuery("status", "")
+
+	pageInt, _ := strconv.Atoi(page)
+	pageSizeInt, _ := strconv.Atoi(pageSize)
+	statusInt, _ := strconv.Atoi(status)
+
+	var statusFilter *int
+	if status != "" {
+		statusFilter = &statusInt
+	}
+
+	result, err := h.userService.GetUsers(pageInt, pageSizeInt, keyword, role, statusFilter)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户列表失败"})
 		return
 	}
-	c.JSON(http.StatusOK, users)
+
+	c.JSON(http.StatusOK, result)
 }
 
 // UpdateUser 更新用户信息
@@ -163,33 +180,6 @@ func (h *UserHandler) ChangePassword(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "密码修改成功"})
-}
-
-// GetUsers 获取用户列表
-func (h *UserHandler) GetUsers(c *gin.Context) {
-	// 实现分页和搜索功能
-	page := c.DefaultQuery("page", "1")
-	pageSize := c.DefaultQuery("page_size", "10")
-	keyword := c.DefaultQuery("keyword", "")
-	role := c.DefaultQuery("role", "")
-	status := c.DefaultQuery("status", "")
-
-	pageInt, _ := strconv.Atoi(page)
-	pageSizeInt, _ := strconv.Atoi(pageSize)
-	statusInt, _ := strconv.Atoi(status)
-
-	var statusFilter *int
-	if status != "" {
-		statusFilter = &statusInt
-	}
-
-	result, err := h.userService.GetUsers(pageInt, pageSizeInt, keyword, role, statusFilter)
-	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "获取用户列表失败"})
-		return
-	}
-
-	c.JSON(http.StatusOK, result)
 }
 
 // GetUser 获取用户详情

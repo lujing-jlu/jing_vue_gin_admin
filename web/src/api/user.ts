@@ -32,6 +32,19 @@ export interface LoginResponse {
   user: User
 }
 
+export interface UserListResponse {
+  total: number
+  list: User[]
+}
+
+export interface UserListRequest {
+  page?: number
+  page_size?: number
+  keyword?: string
+  role?: string
+  status?: number
+}
+
 // 用户登录
 export const login = (data: LoginRequest) => {
   return request<LoginResponse>({
@@ -42,10 +55,11 @@ export const login = (data: LoginRequest) => {
 }
 
 // 获取用户列表
-export const getUserList = () => {
-  return request<User[]>({
+export const getUserList = (params: UserListRequest = {}) => {
+  return request<UserListResponse>({
     url: '/users',
-    method: 'get'
+    method: 'get',
+    params
   })
 }
 
